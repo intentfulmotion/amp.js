@@ -1,0 +1,29 @@
+{
+  "name": "amp-smart-light",
+  "version": "0.1.0",
+  "description": "Library to interact with an Amp smart lighting controller",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/intentfulmotion/amp.js.git"
+  },
+  "keywords": [
+    "amp",
+    "smart-light",
+    "ble",
+    "bicycle-lights"
+  ],
+  "author": "Intentful Motion, Inc.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/intentfulmotion/amp.js/issues"
+  },
+  "homepage": "https://github.com/intentfulmotion/amp.js#readme",
+  "dependencies": {
+    "@msgpack/msgpack": "^2.3.0",
+    "rxjs": "^6.6.3"
+  }
+}
