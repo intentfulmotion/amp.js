@@ -26,6 +26,8 @@ amp.connection.subscribe(connection => {
   }
 })
 
+// the following line will only work from a user gesture
+// see: https://developers.google.com/web/updates/2015/07/interact-with-ble-devices-on-the-web
 const device = navigator.bluetooth.requestDevice(amp.getDeviceOptions())
 await amp.connect(device)
 ```
