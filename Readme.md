@@ -1,6 +1,6 @@
 # amp.js
 
-Interaction library for Amp smart lighting controller. Uses RxJS observables to communicate changes from the Amp.
+Interaction library for the Amp smart lighting controller. Uses RxJS observables to communicate changes from the Amp.
 
 ## Usage
 

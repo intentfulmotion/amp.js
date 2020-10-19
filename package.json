@@ -1,8 +1,8 @@
 {
   "name": "amp-smart-light",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Library to interact with an Amp smart lighting controller",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
   },
   "repository": {
