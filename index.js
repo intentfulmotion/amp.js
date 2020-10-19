@@ -1,11 +1,11 @@
 import Amp from './manager'
-import effects from './effects'
-import Constants, { Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from '../constants'
+import Effects from './effects'
+import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from './models'
 
 export default Amp
 export {
-  effects,
-  Constants,
+  Effects,
+  Bluetooth,
   Actions,
   AccelerationState,
   TurnState,

@@ -1,4 +1,4 @@
-import Constants, { Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from '../constants'
+import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 
@@ -8,78 +8,80 @@ const MTU = 512
 const PacketSize = MTU - 3
 
 export default class Amp {
-  name = ""
-  device = null
-  server = null
-  deviceInfoService = null
-  vehicleService = null
-  profileService = null
-  otaService = null
+  constructor() {
+    this.name = ""
+    this.device = null
+    this.server = null
+    this.deviceInfoService = null
+    this.vehicleService = null
+    this.profileService = null
+    this.otaService = null
 
-  controlCharacteristic = null
-  stateCharacteristic = null
-  lightsCharacteristic = null
-  calibrationCharacteristic = null
-  resetCharacteristic = null
+    this.controlCharacteristic = null
+    this.stateCharacteristic = null
+    this.lightsCharacteristic = null
+    this.calibrationCharacteristic = null
+    this.resetCharacteristic = null
 
-  profileTransmit = null
-  profileReceive = null
-  profileStatus = null
+    this.profileTransmit = null
+    this.profileReceive = null
+    this.profileStatus = null
 
-  batteryCharacteristic = null
-  otaControl = null
-  otaTransmit = null
-  otaStatus = null
+    this.batteryCharacteristic = null
+    this.otaControl = null
+    this.otaTransmit = null
+    this.otaStatus = null
 
-  serialNumber = null
-  firmwareRevision = null
-  hardwareRevision = null
+    this.serialNumber = null
+    this.firmwareRevision = null
+    this.hardwareRevision = null
 
-  _profile = null
+    this._profile = null
 
-  batteryState = {
-    level: 0,
-    state: BatteryState.UNKNOWN,
-    present: false,
-    charging: false
+    this.batteryState = {
+      level: 0,
+      state: BatteryState.UNKNOWN,
+      present: false,
+      charging: false
+    }
+
+    this.connection = new Subject()
+    this.battery = new Subject()
+    this.deviceInfo = new Subject()
+    this.control = new Subject()
+    this.action = new Subject()
+    this.profileTransceive = new Subject()
+    this.profile = new Subject()
+    this.otaDownload = new Subject()
+
+    this.profileReceiveBuffer = new Uint8Array()
+
+    this.controlState = {
+      autoBrake: false,
+      autoTurn: false,
+      autoOrientation: false
+    }
+
+    this.actionState = {
+      motion: AccelerationState.NEUTRAL,
+      turn: TurnState.CENTER,
+      orientation: Orientation.UNKNOWN
+    }
+
+    this._profileTransceiveInProgress = false
+    this._receiveSize = 0
+    this._receivedSize = 0
   }
-
-  connection = new Subject()
-  battery = new Subject()
-  deviceInfo = new Subject()
-  control = new Subject()
-  action = new Subject()
-  profileTransceive = new Subject()
-  profile = new Subject()
-  otaDownload = new Subject()
-
-  profileReceiveBuffer = new Uint8Array()
-
-  controlState = {
-    autoBrake: false,
-    autoTurn: false,
-    autoOrientation: false
-  }
-
-  actionState = {
-    motion: AccelerationState.NEUTRAL,
-    turn: TurnState.CENTER,
-    orientation: Orientation.UNKNOWN
-  }
-
-  _profileTransceiveInProgress = false
-  _receiveSize = 0
-  _receivedSize = 0
 
   getDeviceOptions() {
     return {
-      filters: [{ services: [Constants.vehicleService] }],
+      filters: [{ services: [Bluetooth.vehicleService] }],
       optionalServices: [
         'device_information',
         'battery_service',
-        Constants.vehicleService,
-        Constants.profileService,
-        Constants.otaService
+        Bluetooth.vehicleService,
+        Bluetooth.profileService,
+        Bluetooth.otaService
       ]
     }
   }
@@ -108,12 +110,12 @@ export default class Amp {
       this.batteryState = this.parseBatteryState(await this.batteryCharacteristic.readValue())
 
       // vehicle service
-      let vehicleService = await this.server.getPrimaryService(Constants.vehicleService)
-      this.controlCharacteristic = await vehicleService.getCharacteristic(Constants.controlCharacteristic)
-      this.stateCharacteristic = await vehicleService.getCharacteristic(Constants.stateCharacteristic)
-      this.lightsCharacteristic = await vehicleService.getCharacteristic(Constants.lightsCharacteristic)
-      this.calibrationCharacteristic = await vehicleService.getCharacteristic(Constants.calibrationCharacteristic)
-      this.resetCharacteristic = await vehicleService.getCharacteristic(Constants.resetCharacteristic)
+      let vehicleService = await this.server.getPrimaryService(Bluetooth.vehicleService)
+      this.controlCharacteristic = await vehicleService.getCharacteristic(Bluetooth.controlCharacteristic)
+      this.stateCharacteristic = await vehicleService.getCharacteristic(Bluetooth.stateCharacteristic)
+      this.lightsCharacteristic = await vehicleService.getCharacteristic(Bluetooth.lightsCharacteristic)
+      this.calibrationCharacteristic = await vehicleService.getCharacteristic(Bluetooth.calibrationCharacteristic)
+      this.resetCharacteristic = await vehicleService.getCharacteristic(Bluetooth.resetCharacteristic)
 
       // vehicle service notifications
       this.controlCharacteristic.addEventListener('characteristicvaluechanged', event => this.onControlChanged(event))
@@ -123,10 +125,10 @@ export default class Amp {
       this.stateCharacteristic.startNotifications()
 
       // profile service
-      let profileService = await this.server.getPrimaryService(Constants.profileService)
-      this.profileTransmit = await profileService.getCharacteristic(Constants.profileTransmitCharacteristic)
-      this.profileReceive = await profileService.getCharacteristic(Constants.profileReceiveCharacteristic)
-      this.profileStatus = await profileService.getCharacteristic(Constants.profileStatusCharacteristic)
+      let profileService = await this.server.getPrimaryService(Bluetooth.profileService)
+      this.profileTransmit = await profileService.getCharacteristic(Bluetooth.profileTransmitCharacteristic)
+      this.profileReceive = await profileService.getCharacteristic(Bluetooth.profileReceiveCharacteristic)
+      this.profileStatus = await profileService.getCharacteristic(Bluetooth.profileStatusCharacteristic)
 
       // profile service notifications
       this.profileReceive.addEventListener('characteristicvaluechanged', event => this.onProfileReceived(event))
@@ -136,10 +138,10 @@ export default class Amp {
       this.profileStatus.startNotifications()
 
       // ota service
-      let otaService = await this.server.getPrimaryService(Constants.otaService)
-      this.otaControl = await otaService.getCharacteristic(Constants.otaControlCharacteristic)
-      this.otaTransmit = await otaService.getCharacteristic(Constants.otaTransmitCharacteristic)
-      this.otaStatus = await otaService.getCharacteristic(Constants.otaStatusCharacteristic)
+      let otaService = await this.server.getPrimaryService(Bluetooth.otaService)
+      this.otaControl = await otaService.getCharacteristic(Bluetooth.otaControlCharacteristic)
+      this.otaTransmit = await otaService.getCharacteristic(Bluetooth.otaTransmitCharacteristic)
+      this.otaStatus = await otaService.getCharacteristic(Bluetooth.otaStatusCharacteristic)
 
       // ota service notifications
       this.otaStatus.addEventListener('characteristicvaluechanged', event => this.onOTAStatusChanged(event))

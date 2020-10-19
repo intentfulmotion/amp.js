@@ -145,7 +145,7 @@ const toBatteryState = value => {
   }
 }
 
-export default {
+const Bluetooth = {
   vehicleService,
   controlCharacteristic,
   stateCharacteristic,
@@ -165,6 +165,7 @@ export default {
 }
 
 export {
+  Bluetooth,
   Actions,
   AccelerationState,
   TurnState,
