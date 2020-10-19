@@ -356,7 +356,7 @@ const effects = [
   },
   {
     name: "Sparkle",
-    type: 13=4,
+    type: 14,
     description: "Randomly sparkles a color along the region on top of a background color",
     params: [
       {
