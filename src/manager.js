@@ -280,9 +280,9 @@ export default class Amp {
     await this.profileStatus.writeValue(header)
 
     // send the data
-    let parts = Math.ceil(encoded.buffer.byteLength / PacketSize)
+    let parts = Math.ceil(encoded.buffer.byteLength / this.PacketSize)
     for (let i = 0; i < parts; i++) {
-      let part = encoded.slice(PacketSize * i, PacketSize * (i + 1))
+      let part = encoded.slice(this.PacketSize * i, this.PacketSize * (i + 1))
       await this.profileTransmit.writeValue(part)
       this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: i / parts, done: false })
       this.profileTransceive.next(this.profileTransceiveState)
