@@ -424,7 +424,7 @@ export default class Amp {
 
   onMotionChanged(event) {
     const data = event.target.value
-    this.motionState = parseMotion(data)
+    this.motionState = this.parseMotion(data)
     this.motion.next(this.motionState)
   }
 
