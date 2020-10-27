@@ -344,7 +344,7 @@ export default class Amp {
 
       // only push a new battery state if things have changed
       if (!_.isEqual(this.batteryState, newBattery)) {
-        this.batteryState = battery
+        this.batteryState = newBattery
         this.battery.next(this.batteryState)
       }
     }
@@ -469,7 +469,7 @@ export default class Amp {
 
     // only push a new action state if things have changed
     if (!_.isEqual(this.actionState, newActions)) {
-      this.actionState = this.newActions
+      this.actionState = newActions
       this.actions.next(this.actionState)
     }
   }
