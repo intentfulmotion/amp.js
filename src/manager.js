@@ -1,4 +1,4 @@
-import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from './models'
+import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 
@@ -50,7 +50,8 @@ export default class Amp {
     this.battery = new Subject()
     this.deviceInfo = new Subject()
     this.control = new Subject()
-    this.action = new Subject()
+    this.motion = new Subject()
+    this.actions = new Subject()
     this.profileTransceive = new Subject()
     this.profile = new Subject()
     this.otaDownload = new Subject()
@@ -63,10 +64,16 @@ export default class Amp {
       autoOrientation: false
     }
 
-    this.actionState = {
+    this.motionState = {
       motion: AccelerationState.NEUTRAL,
       turn: TurnState.CENTER,
       orientation: Orientation.UNKNOWN
+    }
+
+    this.actionState = {
+      brakes: Actions.BRAKE_NORMAL,
+      turn: Actions.TURN_CENTER,
+      headlight: Actions.HEADLIGHT_NORMAL
     }
 
     this.profileTransceiveState = {
@@ -112,9 +119,9 @@ export default class Amp {
       this.batteryCharacteristic = await batteryService.getCharacteristic('battery_level_state')
 
       // battery level notifications
+      this.batteryState = this.parseBattery(await this.batteryCharacteristic.readValue())
       this.batteryCharacteristic.addEventListener('characteristicvaluechanged', this.onBatteryStateChanged)
       this.batteryCharacteristic.startNotifications()
-      this.batteryState = this.parseBatteryState(await this.batteryCharacteristic.readValue())
 
       // vehicle service
       let vehicleService = await this.server.getPrimaryService(Bluetooth.vehicleService)
@@ -124,12 +131,20 @@ export default class Amp {
       this.calibrationCharacteristic = await vehicleService.getCharacteristic(Bluetooth.calibrationCharacteristic)
       this.resetCharacteristic = await vehicleService.getCharacteristic(Bluetooth.resetCharacteristic)
 
+      // get initial amp state
+      this.controlState = this.parseControl(await this.controlCharacteristic.readValue())
+      this.motionState = this.parseMotion(await this.stateCharacteristic.readValue())
+      this.actionState = this.parseActions(await this.lightsCharacteristic.readValue())
+
       // vehicle service notifications
       this.controlCharacteristic.addEventListener('characteristicvaluechanged', event => this.onControlChanged(event))
       this.controlCharacteristic.startNotifications()
 
-      this.stateCharacteristic.addEventListener('characteristicvaluechanged', event => this.onAmpStateChanged(event))
+      this.stateCharacteristic.addEventListener('characteristicvaluechanged', event => this.onMotionChanged(event))
       this.stateCharacteristic.startNotifications()
+
+      this.lightsCharacteristic.addEventListener('characteristicvaluechanged', event => this.onActionsChanged(event))
+      this.lightsCharacteristic.startNotifications()
 
       // profile service
       let profileService = await this.server.getPrimaryService(Bluetooth.profileService)
@@ -324,12 +339,12 @@ export default class Amp {
   onBatteryStateChanged(event) {
     if (event.data) {
       const data = event.data.value
-      this.batteryState = this.parseBatteryState(data)
+      this.batteryState = this.parseBattery(data)
       this.battery.next(this.batteryState)
     }
   }
 
-  parseBatteryState(data) {
+  parseBattery(data) {
     let batteryState = Object.assign({}, this.batteryState)
     batteryState.level = data.getUint8(0)
 
@@ -362,42 +377,80 @@ export default class Amp {
     return batteryState
   }
 
-  onControlChanged(event) {
-    const data = event.target.value
+  parseControl(data) {
     let temp = null
+
+    let control = Object.assign({}, this.controlState)
     
     if (data.byteLength >= 1) {
       temp = data.getUint8(0)
-      this.controlState.autoBrake = temp === 0x00 ? this.controlState.autoBrake : temp === 0x01 ? false : true
+      control.autoBrake = temp === 0x00 ? this.controlState.autoBrake : temp === 0x01 ? false : true
     }
 
     if (data.byteLength >= 2) {
       temp = data.getUint8(1)
-      this.controlState.autoTurn = temp === 0x00 ? this.controlState.autoTurn : temp === 0x01 ? false : true
+      control.autoTurn = temp === 0x00 ? this.controlState.autoTurn : temp === 0x01 ? false : true
     }
 
     if (data.byteLength >= 3) {
       temp = data.getUint8(2)
-      this.controlState.autoOrientation = temp === 0x00 ? this.controlState.autoOrientation : temp === 0x01 ? false : true
+      control.autoOrientation = temp === 0x00 ? this.controlState.autoOrientation : temp === 0x01 ? false : true
     }
 
+    return control
+  }
+
+  onControlChanged(event) {
+    const data = event.target.value
+    this.controlState = this.parseControl(data)
     this.control.next(this.controlState)
   }
 
-  onAmpStateChanged(event) {
-    const data = event.target.value
+  parseMotion(data) {
     let temp = null
+    let motion = Object.assign({}, this.motionState)
 
     temp = data.getUint8(0)
-    this.actionState.motion = toAccelerationState(temp)
+    motion.motion = toAccelerationState(temp)
 
     temp = data.getUint8(1)
-    this.actionState.turn = toTurnState(temp)
+    motion.turn = toTurnState(temp)
 
     temp = data.getUint8(2)
-    this.actionState.orientation = toOrientation(temp)
+    motion.orientation = toOrientation(temp)
 
-    this.action.next(this.actionState)
+    return motion
+  }
+
+  onMotionChanged(event) {
+    const data = event.target.value
+    this.motionState = parseMotion(data)
+    this.motion.next(this.motionState)
+  }
+
+  parseActions(data) {
+    let temp = null
+    let actions = Object.assign({}, this.actionState)
+
+    temp = data.getUint8(0)
+    const brakeAction = toAction(temp)
+    actions.brakes = brakeAction == Actions.IGNORE ? this.actionState.brakes : brakeAction
+
+    temp = data.getUint8(1)
+    const headlightAction = toAction(temp)
+    actions.headlight = headlightAction == Actions.IGNORE ? this.actionState.headlight : headlightAction
+
+    temp = data.getUint8(2)
+    const turnAction = toAction(temp)
+    actions.turn = turnAction == Actions.IGNORE ? this.actionState.turn : turnAction
+
+    return actions
+  }
+
+  onActionsChanged(event) {
+    const data = event.target.value
+    this.actionState = this.parseActions(data)
+    this.actions.next(this.actionState)
   }
 
   onProfileReceived(event) {

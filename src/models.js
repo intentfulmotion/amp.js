@@ -132,6 +132,35 @@ const toOrientation = value => {
   }
 }
 
+const toAction = value => {
+  switch (value) {
+    case 0:
+      return Actions.IGNORE
+    case 1:
+      return Actions.OFF
+    case 2:
+      return Actions.RESET
+    case 3:
+      return Actions.BRAKE_NORMAL
+    case 4:
+      return Actions.BRAKE_ACTIVE
+    case 5:
+      return Actions.HEADLIGHT_NORMAL
+    case 6:
+      return Actions.HEADLIGHT_BRIGHT
+    case 7:
+      return Actions.TURN_CENTER
+    case 8:
+      return Actions.TURN_LEFT
+    case 9:
+      return Actions.TURN_RIGHT
+    case 10:
+      return Actions.TURN_HAZARD
+    default:
+      return Actions.IGNORE
+  }
+}
+
 const toBatteryState = value => {
   switch (value) {
     case 0:
@@ -142,6 +171,7 @@ const toBatteryState = value => {
       return BatteryState.CRITICAL
     default:
       return BatteryState.UNKNOWN 
+      
   }
 }
 
@@ -178,4 +208,5 @@ export {
   toAccelerationState,
   toTurnState,
   toOrientation,
+  toAction
 }

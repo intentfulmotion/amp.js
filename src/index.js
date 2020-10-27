@@ -1,6 +1,6 @@
 import Amp from './manager'
 import Effects from './effects'
-import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation } from './models'
+import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction } from './models'
 
 export default Amp
 export {
@@ -16,5 +16,6 @@ export {
   ConnectionState,
   toAccelerationState,
   toTurnState,
-  toOrientation
+  toOrientation,
+  toAction
 }
