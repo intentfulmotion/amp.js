@@ -1,6 +1,7 @@
 import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
+import * as _ from 'lodash'
 
 const decoder = new TextDecoder('utf-8')
 const encoder = new TextEncoder('utf-8')
@@ -339,8 +340,13 @@ export default class Amp {
   onBatteryStateChanged(event) {
     if (event.data) {
       const data = event.data.value
-      this.batteryState = this.parseBattery(data)
-      this.battery.next(this.batteryState)
+      let newBattery = this.parseBattery(data)
+
+      // only push a new battery state if things have changed
+      if (!_.isEqual(this.batteryState, newBattery)) {
+        this.batteryState = battery
+        this.battery.next(this.batteryState)
+      }
     }
   }
 
@@ -402,8 +408,13 @@ export default class Amp {
 
   onControlChanged(event) {
     const data = event.target.value
-    this.controlState = this.parseControl(data)
-    this.control.next(this.controlState)
+    let newControl = this.parseControl(data)
+
+    // only push a new control state if things have changed
+    if (!_.isEqual(this.controlState, newControl)) {
+      this.controlState = newControl
+      this.control.next(this.controlState)
+    }
   }
 
   parseMotion(data) {
@@ -424,8 +435,13 @@ export default class Amp {
 
   onMotionChanged(event) {
     const data = event.target.value
-    this.motionState = this.parseMotion(data)
-    this.motion.next(this.motionState)
+    let newMotion = this.parseMotion(data)
+
+    // only push a new motion state if things have changed
+    if (!_.isEqual(this.motionState, newMotion)) {
+      this.motionState = newMotion
+      this.motion.next(this.motionState)
+    }
   }
 
   parseActions(data) {
@@ -449,8 +465,13 @@ export default class Amp {
 
   onActionsChanged(event) {
     const data = event.target.value
-    this.actionState = this.parseActions(data)
-    this.actions.next(this.actionState)
+    let newActions = this.parseActions(data)
+
+    // only push a new action state if things have changed
+    if (!_.isEqual(this.actionState, newActions)) {
+      this.actionState = this.newActions
+      this.actions.next(this.actionState)
+    }
   }
 
   onProfileReceived(event) {
