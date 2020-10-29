@@ -22,14 +22,22 @@ const Actions = {
   IGNORE: 0,
   OFF: 1,
   RESET: 2,
-  BRAKE_NORMAL: 3,
-  BRAKE_ACTIVE: 4,
-  HEADLIGHT_NORMAL: 5,
-  HEADLIGHT_BRIGHT: 6,
-  TURN_CENTER: 7,
-  TURN_LEFT: 8,
-  TURN_RIGHT: 9,
-  TURN_HAZARD: 10 
+  MOTION_NEUTRAL: 3,
+  MOTION_BRAKES: 4,
+  MOTION_ACCELERATION: 5,
+  HEADLIGHT_NORMAL: 6,
+  HEADLIGHT_BRIGHT: 7,
+  TURN_CENTER: 8,
+  TURN_LEFT: 9,
+  TURN_RIGHT: 10,
+  TURN_HAZARD: 11,
+  ORIENTATION_UNKNOWN: 12,
+  ORIENTATION_TOP: 13,
+  ORIENTATION_BOTTOM: 14,
+  ORIENTATION_LEFT: 15,
+  ORIENTATION_RIGHT: 16,
+  ORIENTATION_FRONT: 17,
+  ORIENTATION_BACK: 18
 }
 
 const ProfileTransceiverStatus = {
@@ -141,21 +149,37 @@ const toAction = value => {
     case 2:
       return Actions.RESET
     case 3:
-      return Actions.BRAKE_NORMAL
+      return Actions.MOTION_NEUTRAL
     case 4:
-      return Actions.BRAKE_ACTIVE
+      return Actions.MOTION_BRAKES
     case 5:
-      return Actions.HEADLIGHT_NORMAL
+      return Actions.MOTION_ACCELERATION
     case 6:
-      return Actions.HEADLIGHT_BRIGHT
+      return Actions.HEADLIGHT_NORMAL
     case 7:
-      return Actions.TURN_CENTER
+      return Actions.HEADLIGHT_BRIGHT
     case 8:
-      return Actions.TURN_LEFT
+      return Actions.TURN_CENTER
     case 9:
-      return Actions.TURN_RIGHT
+      return Actions.TURN_LEFT
     case 10:
+      return Actions.TURN_RIGHT
+    case 11:
       return Actions.TURN_HAZARD
+    case 12:
+      return Actions.ORIENTATION_UNKNOWN
+    case 13:
+      return Actions.ORIENTATION_TOP
+    case 14:
+      return Actions.ORIENTATION_BOTTOM
+    case 15:
+      return Actions.ORIENTATION_LEFT
+    case 16:
+      return Actions.ORIENTATION_RIGHT
+    case 17:
+      return Actions.ORIENTATION_FRONT
+    case 18:
+      return Actions.ORIENTATION_BACK
     default:
       return Actions.IGNORE
   }
@@ -171,7 +195,6 @@ const toBatteryState = value => {
       return BatteryState.CRITICAL
     default:
       return BatteryState.UNKNOWN 
-      
   }
 }
 

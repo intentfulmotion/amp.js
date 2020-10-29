@@ -72,9 +72,10 @@ export default class Amp {
     }
 
     this.actionState = {
-      brakes: Actions.BRAKE_NORMAL,
+      motion: Actions.MOTION_NEUTRAL,
       turn: Actions.TURN_CENTER,
-      headlight: Actions.HEADLIGHT_NORMAL
+      headlight: Actions.HEADLIGHT_NORMAL,
+      orientation: Actions.ORIENTATION_UNKNOWN
     }
 
     this.profileTransceiveState = {
@@ -105,9 +106,9 @@ export default class Amp {
     this.device = device
 
     try {
-      this.connection.next(ConnectionState.CONNECTING)
+      this.connection.next({ state: ConnectionState.CONNECTING, data: null })
       this.server = await this.device.gatt.connect()
-      this.connection.next(ConnectionState.DISCOVERING_SERVICES)
+      this.connection.next({ state: ConnectionState.DISCOVERING_SERVICES, data: null })
 
       this.name = device.name
       device.addEventListener('gattserverdisconnected', () => this.onDisconnected())
@@ -171,16 +172,16 @@ export default class Amp {
       this.otaStatus.startNotifications()
 
       this._profileTransceiveInProgress = false
-      this.connection.next(ConnectionState.READY)
+      this.connection.next({ state: ConnectionState.READY, data: null })
     }
     catch (err) {
       console.error('amp connection error', err)
-      this.connection.next(ConnectionState.ERROR)
+      this.connection.next({ state: ConnectionState.ERROR, data: err })
     }
   }
 
   onDisconnected() {
-    this.connection.next(ConnectionState.DISCONNECTED)
+    this.connection.next({ state: ConnectionState.DISCONNECTED, data: null })
   }
 
   async getDeviceInfo() {
@@ -219,12 +220,13 @@ export default class Amp {
     await this.controlCharacteristic.writeValue(data)
   }
 
-  async updateLights(brakes = Actions.IGNORE, headlight = Actions.IGNORE, indicators = Actions.IGNORE) {
-    console.log(`update lights: ${brakes}, ${headlight}, ${indicators}`)
+  async updateLights(motion = Actions.IGNORE, headlight = Actions.IGNORE, indicators = Actions.IGNORE, orientation = Actions.IGNORE) {
+    console.log(`update lights: ${motion}, ${headlight}, ${indicators}, ${orientation}`)
     let data = new Uint8Array(3)
-    data[0] = brakes
+    data[0] = motion
     data[1] = headlight
     data[2] = indicators
+    data[3] = orientation
 
     await this.lightsCharacteristic.writeValue(data)
   }
@@ -459,6 +461,10 @@ export default class Amp {
     temp = data.getUint8(2)
     const turnAction = toAction(temp)
     actions.turn = turnAction == Actions.IGNORE ? this.actionState.turn : turnAction
+
+    temp = data.getUint8(3)
+    const orientationAction = toAction(temp)
+    actions.orientation = orientationAction == Actions.IGNORE ? this.actionState.orientation : orientationAction
 
     return actions
   }
