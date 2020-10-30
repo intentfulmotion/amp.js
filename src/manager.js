@@ -60,7 +60,7 @@ export default class Amp {
     this.profileReceiveBuffer = new Uint8Array()
 
     this.controlState = {
-      autoBrake: false,
+      autoMotion: false,
       autoTurn: false,
       autoOrientation: false
     }
@@ -200,12 +200,12 @@ export default class Amp {
     this.deviceInfo.next({ serialNumber: this.serialNumber, firmwareRevision: this.firmwareRevision, hardwareRevision: this.hardwareRevision })
   }
 
-  async updateControl(autoBrake, autoTurn, autoOrientation) {
+  async updateControl(autoMotion, autoTurn, autoOrientation) {
     let data = new Uint8Array(3)
-    if (autoBrake === null)
+    if (autoMotion === null)
       data[0] = 0x00
     else
-      data[0] = autoBrake ? 0x01 : 0x02
+      data[0] = autoMotion ? 0x01 : 0x02
 
     if (autoTurn === null)
       data[1] = 0x00
@@ -392,7 +392,7 @@ export default class Amp {
     
     if (data.byteLength >= 1) {
       temp = data.getUint8(0)
-      control.autoBrake = temp === 0x00 ? this.controlState.autoBrake : temp === 0x01 ? false : true
+      control.autoMotion = temp === 0x00 ? this.controlState.autoMotion : temp === 0x01 ? false : true
     }
 
     if (data.byteLength >= 2) {
@@ -451,8 +451,8 @@ export default class Amp {
     let actions = Object.assign({}, this.actionState)
 
     temp = data.getUint8(0)
-    const brakeAction = toAction(temp)
-    actions.brakes = brakeAction == Actions.IGNORE ? this.actionState.brakes : brakeAction
+    const motionAction = toAction(temp)
+    actions.motion = motionAction == Actions.IGNORE ? this.actionState.motion : motionAction
 
     temp = data.getUint8(1)
     const headlightAction = toAction(temp)
