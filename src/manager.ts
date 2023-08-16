@@ -1,92 +1,138 @@
-import { Bluetooth, Actions, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction } from './models'
+import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction, Profile, ActionsText } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 import * as _ from 'lodash'
 
 const decoder = new TextDecoder('utf-8')
-const encoder = new TextEncoder('utf-8')
+const encoder = new TextEncoder()
+
+export interface ConnectionStatus {
+  state: ConnectionState
+  data: null | Error
+}
+
+export interface ControlState {
+  autoMotion: boolean
+  autoTurn: boolean
+  autoOrientation: boolean
+}
+
+export interface MotionState {
+  motion: AccelerationState
+  turn: TurnState
+  orientation: Orientation
+}
+
+export interface ActionState {
+  motion: Action
+  turn: Action
+  headlight: Action
+  orientation: Action
+}
+
+export interface AmpBatteryState {
+  level: number
+  state: BatteryState
+  present: boolean
+  charging: boolean
+}
+
+export interface ProfileTransceiverState {
+  progress: number
+  status: ProfileTransceiverStatus | null
+  done: boolean
+}
+
+export interface OTAUpdateState {
+  status?: OtaDownloadStatus
+  progress?: number
+}
 
 export default class Amp {
+  name: String = ""
+  device: BluetoothDevice | null = null
+  server: BluetoothRemoteGATTServer | null = null
+  deviceInfoService: BluetoothRemoteGATTService | null = null
+  vehicleService: BluetoothRemoteGATTService | null = null
+  profileService: BluetoothRemoteGATTService | null = null
+  otaService: BluetoothRemoteGATTService | null = null
+
+  controlCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  stateCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  lightsCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  calibrationCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  resetCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+
+  profileTransmit: BluetoothRemoteGATTCharacteristic | null = null
+  profileReceive: BluetoothRemoteGATTCharacteristic | null = null
+  profileStatus: BluetoothRemoteGATTCharacteristic | null = null
+
+  batteryCharacteristic: BluetoothRemoteGATTCharacteristic | null = null
+  otaControl: BluetoothRemoteGATTCharacteristic | null = null
+  otaTransmit: BluetoothRemoteGATTCharacteristic | null = null
+  otaStatus: BluetoothRemoteGATTCharacteristic | null = null
+
+  serialNumber: string | null = null
+  firmwareRevision: string | null = null
+  hardwareRevision: string | null = null
+
+  MTU: number = 512
+  PacketSize: number = 509
+
+  connection = new Subject<ConnectionStatus>()
+  battery = new Subject<AmpBatteryState>()
+  deviceInfo = new Subject()
+  control = new Subject()
+  motion = new Subject()
+  actions = new Subject()
+  profileTransceive = new Subject()
+  profile = new Subject()
+  otaDownload = new Subject()
+  otaDownloadUpdates = new Subject<OTAUpdateState>()
+
+  profileReceiveBuffer = new Uint8Array()
+
+  batteryState: AmpBatteryState = {
+    level: 0,
+    state: BatteryState.unknown,
+    present: false,
+    charging: false
+  }
+
+  controlState: ControlState = {
+    autoMotion: false,
+    autoTurn: false,
+    autoOrientation: false
+  }
+
+  motionState: MotionState = {
+    motion: AccelerationState.neutral,
+    turn: TurnState.center,
+    orientation: Orientation.unknown
+  }
+
+  actionState: ActionState = {
+    motion: Action.motion_neutral,
+    turn: Action.turn_center,
+    headlight: Action.headlight_normal,
+    orientation: Action.orientation_unknown
+  }
+
+  profileTransceiveState: ProfileTransceiverState = {
+    status: null,
+    progress: 0,
+    done: false
+  }
+
+  _profileTransceiveInProgress = false
+  _receiveSize = 0
+  _receivedSize = 0
+
+  _profile: Profile | null = null
+
   constructor(MTU = 512) {
-    this.name = ""
-    this.device = null
-    this.server = null
-    this.deviceInfoService = null
-    this.vehicleService = null
-    this.profileService = null
-    this.otaService = null
-
-    this.controlCharacteristic = null
-    this.stateCharacteristic = null
-    this.lightsCharacteristic = null
-    this.calibrationCharacteristic = null
-    this.resetCharacteristic = null
-
-    this.profileTransmit = null
-    this.profileReceive = null
-    this.profileStatus = null
-
-    this.batteryCharacteristic = null
-    this.otaControl = null
-    this.otaTransmit = null
-    this.otaStatus = null
-
-    this.serialNumber = null
-    this.firmwareRevision = null
-    this.hardwareRevision = null
-
-    this._profile = null
-
     this.MTU = MTU
     this.PacketSize = MTU - 3
-
-    this.batteryState = {
-      level: 0,
-      state: BatteryState.UNKNOWN,
-      present: false,
-      charging: false
-    }
-
-    this.connection = new Subject()
-    this.battery = new Subject()
-    this.deviceInfo = new Subject()
-    this.control = new Subject()
-    this.motion = new Subject()
-    this.actions = new Subject()
-    this.profileTransceive = new Subject()
-    this.profile = new Subject()
-    this.otaDownload = new Subject()
-
-    this.profileReceiveBuffer = new Uint8Array()
-
-    this.controlState = {
-      autoMotion: false,
-      autoTurn: false,
-      autoOrientation: false
-    }
-
-    this.motionState = {
-      motion: AccelerationState.NEUTRAL,
-      turn: TurnState.CENTER,
-      orientation: Orientation.UNKNOWN
-    }
-
-    this.actionState = {
-      motion: Actions.MOTION_NEUTRAL,
-      turn: Actions.TURN_CENTER,
-      headlight: Actions.HEADLIGHT_NORMAL,
-      orientation: Actions.ORIENTATION_UNKNOWN
-    }
-
-    this.profileTransceiveState = {
-      state: null,
-      progress: 0,
-      done: false
-    }
-
-    this._profileTransceiveInProgress = false
-    this._receiveSize = 0
-    this._receivedSize = 0
   }
 
   getDeviceOptions() {
@@ -102,15 +148,15 @@ export default class Amp {
     }
   }
 
-  async connectAmp(device) {
+  async connectAmp(device: BluetoothDevice) {
     this.device = device
 
     try {
-      this.connection.next({ state: ConnectionState.CONNECTING, data: null })
-      this.server = await this.device.gatt.connect()
-      this.connection.next({ state: ConnectionState.DISCOVERING_SERVICES, data: null })
+      this.connection.next({ state: ConnectionState.connecting, data: null })
+      this.server = await this.device.gatt!!.connect()
+      this.connection.next({ state: ConnectionState.discovering_services, data: null })
 
-      this.name = device.name
+      this.name = device.name!!
       device.addEventListener('gattserverdisconnected', () => this.onDisconnected())
 
       // get device info
@@ -176,35 +222,35 @@ export default class Amp {
       this.otaStatus.startNotifications()
 
       this._profileTransceiveInProgress = false
-      this.connection.next({ state: ConnectionState.READY, data: null })
+      this.connection.next({ state: ConnectionState.ready, data: null })
     }
     catch (err) {
       console.error('amp connection error', err)
-      this.connection.next({ state: ConnectionState.ERROR, data: err })
+      this.connection.next({ state: ConnectionState.error, data: err as Error })
     }
   }
 
   onDisconnected() {
-    this.connection.next({ state: ConnectionState.DISCONNECTED, data: null })
+    this.connection.next({ state: ConnectionState.disconnected, data: null })
   }
 
   async getDeviceInfo() {
-    let deviceInfo = await this.server.getPrimaryService('device_information')
+    let deviceInfo = await this.server?.getPrimaryService('device_information')
 
     // disabled because of web bluetooth privacy restrictions
     // let tempCharacteristic = await deviceInfo.getCharacteristic('serial_number_string')
     // this.serialNumber = decoder.decode(await tempCharacteristic.readValue())
 
-    let tempCharacteristic = await deviceInfo.getCharacteristic('firmware_revision_string')
-    this.firmwareRevision = decoder.decode(await tempCharacteristic.readValue())
+    let tempCharacteristic = await deviceInfo?.getCharacteristic('firmware_revision_string')
+    this.firmwareRevision = decoder.decode(await tempCharacteristic?.readValue())
 
-    tempCharacteristic = await deviceInfo.getCharacteristic('hardware_revision_string')
-    this.hardwareRevision = decoder.decode(await tempCharacteristic.readValue())
+    tempCharacteristic = await deviceInfo?.getCharacteristic('hardware_revision_string')
+    this.hardwareRevision = decoder.decode(await tempCharacteristic?.readValue())
 
     this.deviceInfo.next({ serialNumber: this.serialNumber, firmwareRevision: this.firmwareRevision, hardwareRevision: this.hardwareRevision })
   }
 
-  async updateControl(autoMotion, autoTurn, autoOrientation) {
+  async updateControl({autoMotion, autoTurn, autoOrientation}: ControlState) {
     let data = new Uint8Array(3)
     if (autoMotion === null)
       data[0] = 0x00
@@ -221,10 +267,10 @@ export default class Amp {
     else
       data[2] = autoOrientation ? 0x01 : 0x02
 
-    await this.controlCharacteristic.writeValue(data)
+    await this.controlCharacteristic?.writeValue(data)
   }
 
-  async updateLights(motion = Actions.IGNORE, headlight = Actions.IGNORE, indicators = Actions.IGNORE, orientation = Actions.IGNORE) {
+  async updateLights(motion = Action.ignore, headlight = Action.ignore, indicators = Action.ignore, orientation = Action.ignore) {
     console.log(`update lights: ${motion}, ${headlight}, ${indicators}, ${orientation}`)
     let data = new Uint8Array(3)
     data[0] = motion
@@ -232,44 +278,48 @@ export default class Amp {
     data[2] = indicators
     data[3] = orientation
 
-    await this.lightsCharacteristic.writeValue(data)
+    await this.lightsCharacteristic?.writeValue(data)
   }
 
-  async calibrate(calibrateAccelerometer, calibrateGyroscope, calibrateMagnetometer) {
+  async calibrate(calibrateAccelerometer: boolean, calibrateGyroscope: boolean, calibrateMagnetometer: boolean) {
     let data = new Uint8Array(3)
     data[0] = calibrateAccelerometer ? 0x01 : 0x00
     data[1] = calibrateGyroscope ? 0x01 : 0x00
     data[2] = calibrateMagnetometer ? 0x01 : 0x00
 
-    await this.calibrationCharacteristic.writeValue(data)
+    await this.calibrationCharacteristic?.writeValue(data)
   }
 
   async reset() {
-    await this.resetCharacteristic.writeValue(Uint8Array.of(1))
+    await this.resetCharacteristic?.writeValue(Uint8Array.of(1))
   }
 
   async startOTAUpdate() {
-    await this.otaControl.writeValue(OtaDownloadStatus.DOWNLOAD_START)
-    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.DOWNLOAD_START, progress: 0 })
+    const data = new Uint8Array(1)
+    data[0] = OtaDownloadStatus.download_start
+    await this.otaControl?.writeValue(data)
+    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.download_start, progress: 0 })
   }
 
   async endOTAUpdate() {
-    await this.otaControl.writeValue(OtaDownloadStatus.DOWNLOAD_END)
-    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.DOWNLOAD_END, progress: 100 })
+    const data = new Uint8Array(1)
+    data[0] = OtaDownloadStatus.download_end
+    await this.otaControl?.writeValue(data)
+    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.download_end, progress: 100 })
   }
 
-  async sendOTAUpdate(url) {
+  async sendOTAUpdate(url: string) {
     await this.startOTAUpdate()
 
-    let response = await fetch(url)
-    if (response.ok()) {
-      let data = await response.blob()
-      let parts = Math.ceil(data.size / this.PacketSize)
-      let buffer = await data.arrayBuffer()
+    const response = await fetch(url)
+    if (response.ok) {
+      const data = await response.blob()
+      const parts = Math.ceil(data.size / this.PacketSize)
+      const buffer = await data.arrayBuffer()
 
       for (let i = 0; i < parts; i++) {
-        let part = buffer.subarray(this.PacketSize * i, this.PacketSize * (i + 1))
-        await this.otaTransmit.writeValue(part)
+        let part = buffer.slice(this.PacketSize * i, this.PacketSize * (i + 1))
+        await this.otaTransmit?.writeValue(part)
         this.otaDownloadUpdates.next({ progress: i / parts })
       }
     }
@@ -277,17 +327,17 @@ export default class Amp {
     await this.endOTAUpdate()
   }
 
-  async profileSend(key, value, encodeValue = true) {
+  async profileSend(key: string, value: string | Uint8Array) {
     if (this._profileTransceiveInProgress)
       throw new Error('profile tx / rx is already in progress')
 
     this._profileTransceiveInProgress = true
-    this.profileTransceiveState = { status: ProfileTransceiverStatus.TRANSMIT_START, progress: 0, done: false }
+    this.profileTransceiveState = { status: ProfileTransceiverStatus.transmit_start, progress: 0, done: false }
     this.profileTransceive.next(this.profileTransceiveState)
 
     // encode key and only encode value if necessary
     let keyEncoded = encoder.encode(`${key}:`)
-    let valueEncoded = encodeValue ? encoder.encode(value) : value
+    let valueEncoded = typeof value === 'string' ? encoder.encode(value) : value
 
     // packed data
     let encoded = new Uint8Array(keyEncoded.buffer.byteLength + valueEncoded.buffer.byteLength)
@@ -295,17 +345,17 @@ export default class Amp {
     encoded.set(valueEncoded, keyEncoded.buffer.byteLength)
     
     let header = new Uint8Array(5)
-    header.set(Uint8Array.of(ProfileTransceiverStatus.TRANSMIT_START), 0)
+    header.set(Uint8Array.of(ProfileTransceiverStatus.transmit_start), 0)
     header.set(this.toPackedUint32(encoded.buffer.byteLength), 1)
 
     // tell the profile service we're starting to transmit with x bytes
-    await this.profileStatus.writeValue(header)
+    await this.profileStatus?.writeValue(header)
 
     // send the data
     let parts = Math.ceil(encoded.buffer.byteLength / this.PacketSize)
     for (let i = 0; i < parts; i++) {
       let part = encoded.slice(this.PacketSize * i, this.PacketSize * (i + 1))
-      await this.profileTransmit.writeValue(part)
+      await this.profileTransmit?.writeValue(part)
       this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: i / parts, done: false })
       this.profileTransceive.next(this.profileTransceiveState)
     }
@@ -316,18 +366,18 @@ export default class Amp {
     this.profileTransceive.next(this.profileTransceiveState)
   }
 
-  toPackedUint32(num) {
+  toPackedUint32(num: number) {
     let asUint32 = Uint32Array.of(num)
     let view = new DataView(asUint32.buffer)
     return new Uint8Array(view.buffer)
   }
 
-  async setDeviceName(name) {
+  async setDeviceName(name: string) {
     await this.profileSend('name', name)
     this.name = name
   }
 
-  async setEffect(action, region, effect, save = false) {
+  async setEffect(action: [keyof ActionsText], region: string, effect: string, save = false) {
     let key = save ? "saveEffect" : "effect"
     await this.profileSend(key, `${action},${region},${effect}`)
   }
@@ -337,13 +387,13 @@ export default class Amp {
     await this.profileSend('get', 'config')
   }
 
-  async setProfile(profile) {
+  async setProfile(profile: Profile) {
     let msgpackEncoded = encode(profile)
     msgpackEncoded = msgpackEncoded.slice(msgpackEncoded.byteOffset, msgpackEncoded.byteLength)
-    await this.profileSend('raw', msgpackEncoded, false)
+    await this.profileSend('raw', msgpackEncoded)
   }
 
-  onBatteryStateChanged(event) {
+  onBatteryStateChanged(event: any) {
     if (event.data) {
       const data = event.data.value
       let newBattery = this.parseBattery(data)
@@ -356,7 +406,7 @@ export default class Amp {
     }
   }
 
-  parseBattery(data) {
+  parseBattery(data: DataView) {
     let batteryState = Object.assign({}, this.batteryState)
     batteryState.level = data.getUint8(0)
 
@@ -366,11 +416,11 @@ export default class Amp {
     // state of charge
     let binaryStateString = binary.substring(0, 2)
     if (binaryStateString === '10')
-      batteryState.state = BatteryState.NORMAL
+      batteryState.state = BatteryState.normal
     else if (binaryStateString === '11')
-      batteryState.state = BatteryState.CRITICAL
+      batteryState.state = BatteryState.critical
     else
-      batteryState.state = BatteryState.UNKNOWN
+      batteryState.state = BatteryState.unknown
 
     // discharging / charging
     let charging = binary.substring(2, 4)
@@ -389,7 +439,7 @@ export default class Amp {
     return batteryState
   }
 
-  parseControl(data) {
+  parseControl(data: DataView) {
     let temp = null
 
     let control = Object.assign({}, this.controlState)
@@ -412,8 +462,8 @@ export default class Amp {
     return control
   }
 
-  onControlChanged(event) {
-    const data = event.target.value
+  onControlChanged(event: any) {
+    const data = event.target?.value
     let newControl = this.parseControl(data)
 
     // only push a new control state if things have changed
@@ -423,7 +473,7 @@ export default class Amp {
     }
   }
 
-  parseMotion(data) {
+  parseMotion(data: DataView) {
     let temp = null
     let motion = Object.assign({}, this.motionState)
 
@@ -439,7 +489,7 @@ export default class Amp {
     return motion
   }
 
-  onMotionChanged(event) {
+  onMotionChanged(event: any) {
     const data = event.target.value
     let newMotion = this.parseMotion(data)
 
@@ -450,31 +500,31 @@ export default class Amp {
     }
   }
 
-  parseActions(data) {
+  parseActions(data: DataView) {
     let temp = null
     let actions = Object.assign({}, this.actionState)
 
     temp = data.getUint8(0)
-    const motionAction = toAction(temp)
-    actions.motion = motionAction == Actions.IGNORE ? this.actionState.motion : motionAction
+    const motionAction = temp as Action
+    actions.motion = motionAction == Action.ignore ? this.actionState.motion : motionAction
 
     temp = data.getUint8(1)
-    const headlightAction = toAction(temp)
-    actions.headlight = headlightAction == Actions.IGNORE ? this.actionState.headlight : headlightAction
+    const headlightAction = temp as Action
+    actions.headlight = headlightAction == Action.ignore ? this.actionState.headlight : headlightAction
 
     temp = data.getUint8(2)
-    const turnAction = toAction(temp)
-    actions.turn = turnAction == Actions.IGNORE ? this.actionState.turn : turnAction
+    const turnAction = temp as Action
+    actions.turn = turnAction == Action.ignore ? this.actionState.turn : turnAction
 
     temp = data.getUint8(3)
-    const orientationAction = toAction(temp)
-    actions.orientation = orientationAction == Actions.IGNORE ? this.actionState.orientation : orientationAction
+    const orientationAction = temp as Action
+    actions.orientation = orientationAction == Action.ignore ? this.actionState.orientation : orientationAction
 
     return actions
   }
 
-  onActionsChanged(event) {
-    const data = event.target.value
+  onActionsChanged(event: any) {
+    const data = event.target?.value
     let newActions = this.parseActions(data)
 
     // only push a new action state if things have changed
@@ -484,7 +534,7 @@ export default class Amp {
     }
   }
 
-  onProfileReceived(event) {
+  onProfileReceived(event: any) {
     const data = event.target.value
     this.profileReceiveBuffer.set(new Uint8Array(data.buffer), this._receivedSize)
     this._receivedSize += data.buffer.byteLength
@@ -498,14 +548,14 @@ export default class Amp {
     }
   }
 
-  onProfileTransceiveChanged(event) {
+  onProfileTransceiveChanged(event: any) {
     const data = event.target.value
     let status = data.getUint8(0)
 
     switch (status) {
-      case ProfileTransceiverStatus.TRANSMIT_START:
+      case ProfileTransceiverStatus.transmit_start:
         break;
-      case ProfileTransceiverStatus.RECEIVE_START:
+      case ProfileTransceiverStatus.receive_start:
         // TODO: ensure we don't get a start of packet while a transceive is in progress      
         this._receiveSize = data.getUint32(1, true)
         this._receivedSize = 0;
@@ -520,7 +570,7 @@ export default class Amp {
     }
   }
 
-  parseReceivedData(buffer) {
+  parseReceivedData(buffer: Uint8Array) {
     // find colon
     let colonIndex = buffer.indexOf(58)
     if (colonIndex != -1) {
@@ -529,13 +579,13 @@ export default class Amp {
       let key = decoder.decode(keyBuffer)
 
       if (key === 'raw') {
-        this._profile = decode(valueBuffer)
+        this._profile = decode(valueBuffer) as Profile
         this.profile.next(this._profile)
       }
     }
   }
 
-  onOTAStatusChanged(event) {
+  onOTAStatusChanged(event: any) {
     const data = event.target.value
     let status = data.getUint8(0)
 

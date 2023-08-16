@@ -24,5 +24,9 @@
     "@msgpack/msgpack": "^2.3.0",
     "lodash": "^4.17.20",
     "rxjs": "^6.6.3"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.197",
+    "@types/web-bluetooth": "^0.0.17"
   }
 }
