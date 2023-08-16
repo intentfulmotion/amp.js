@@ -117,13 +117,17 @@ export default class Amp {
       await this.getDeviceInfo()
 
       // battery level
-      let batteryService = await this.server.getPrimaryService('battery_service')
-      this.batteryCharacteristic = await batteryService.getCharacteristic('battery_level_state')
+      try {
+        let batteryService = await this.server.getPrimaryService('battery_service')
+        this.batteryCharacteristic = await batteryService.getCharacteristic('battery_level_state')
 
-      // battery level notifications
-      this.batteryState = this.parseBattery(await this.batteryCharacteristic.readValue())
-      this.batteryCharacteristic.addEventListener('characteristicvaluechanged', this.onBatteryStateChanged)
-      this.batteryCharacteristic.startNotifications()
+        // battery level notifications
+        this.batteryState = this.parseBattery(await this.batteryCharacteristic.readValue())
+        this.batteryCharacteristic.addEventListener('characteristicvaluechanged', this.onBatteryStateChanged)
+        this.batteryCharacteristic.startNotifications()
+      } catch (err) {
+        console.warn(err)
+      }
 
       // vehicle service
       let vehicleService = await this.server.getPrimaryService(Bluetooth.vehicleService)
