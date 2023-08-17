@@ -77,7 +77,8 @@ export default class Amp {
   hardwareRevision: string | null = null
 
   MTU: number = 512
-  PacketSize: number = 509
+  PacketSize: number = this.MTU - 3
+  ProfilePacketSize: number = 20
 
   connection = new Subject<ConnectionStatus>()
   battery = new Subject<AmpBatteryState>()
@@ -366,9 +367,9 @@ export default class Amp {
     await this.profileStatus?.writeValue(header)
 
     // send the data
-    let parts = Math.ceil(encoded.buffer.byteLength / this.PacketSize)
+    let parts = Math.ceil(encoded.buffer.byteLength / this.ProfilePacketSize)
     for (let i = 0; i < parts; i++) {
-      let part = encoded.slice(this.PacketSize * i, this.PacketSize * (i + 1))
+      let part = encoded.slice(this.ProfilePacketSize * i, this.ProfilePacketSize * (i + 1))
       await this.profileTransmit?.writeValue(part)
       this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: i / parts, done: false })
       this.profileTransceive.next(this.profileTransceiveState)
