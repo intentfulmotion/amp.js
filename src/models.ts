@@ -49,10 +49,9 @@ export enum OtaDownloadStatus {
   start = 0,
   end = 1,
   ready = 2,
-  write = 3,  
-  start_error = 4,
-  end_error = 5,
-  write_error = 6
+  start_error = 3,
+  end_error = 4,
+  write_error = 5
 }
 
 export enum AccelerationState {
