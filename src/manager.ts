@@ -308,20 +308,24 @@ export default class Amp {
     this.otaDownloadUpdates.next({ status: OtaDownloadStatus.download_end, progress: 100 })
   }
 
-  async sendOTAUpdate(url: string) {
-    await this.startOTAUpdate()
-
+  async downloadOTAUpdate(url: string) {
     const response = await fetch(url)
     if (response.ok) {
       const data = await response.blob()
-      const parts = Math.ceil(data.size / this.PacketSize)
       const buffer = await data.arrayBuffer()
 
-      for (let i = 0; i < parts; i++) {
-        let part = buffer.slice(this.PacketSize * i, this.PacketSize * (i + 1))
-        await this.otaTransmit?.writeValue(part)
-        this.otaDownloadUpdates.next({ progress: i / parts })
-      }
+      this.sendOTAUpdate(buffer)
+    }
+  }
+
+  async sendOTAUpdate(data: ArrayBuffer) {
+    await this.startOTAUpdate()
+    const parts = Math.ceil(data.byteLength / this.PacketSize)
+
+    for (let i = 0; i < parts; i++) {
+      let part = data.slice(this.PacketSize * i, this.PacketSize * (i + 1))
+      await this.otaTransmit?.writeValue(part)
+      this.otaDownloadUpdates.next({ progress: i / parts })
     }
 
     await this.endOTAUpdate()
