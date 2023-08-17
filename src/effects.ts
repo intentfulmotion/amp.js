@@ -7,7 +7,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ],
@@ -20,7 +20,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -38,7 +38,7 @@ const effects = [
       },
       {
         name: "layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -69,7 +69,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -100,7 +100,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -131,7 +131,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -156,7 +156,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -187,7 +187,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -218,7 +218,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -237,7 +237,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -256,7 +256,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -293,7 +293,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -318,7 +318,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -349,7 +349,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
@@ -380,11 +380,54 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "uint8",
+        type: "number",
         required: false
       }
     ]
   },
+  {
+    name: "Reactive Fade - Attitude",
+    type: 15,
+    description: "Fades between colors based on changes in attitude along a single axis",
+    params: [
+      {
+        name: "from",
+        description: "Color to fade from",
+        type: "color",
+        required: true
+      },
+      {
+        name: "to",
+        description: "Color to fade to",
+        type: "color",
+        required: true
+      },
+      {
+        name: "min",
+        description: "Minimum attitude value",
+        type: "float",
+        required: true
+      },
+      {
+        name: "max",
+        description: "Maximum attitude value",
+        type: "float",
+        required: true
+      },
+      {
+        name: "axis",
+        description: "Attitude Axis",
+        type: "attitudeAxis",
+        required: true
+      },
+      {
+        name: "layer",
+        description: "Layer",
+        type: "number",
+        required: false
+      }
+    ]
+  }
 ]
 
 export default effects;
