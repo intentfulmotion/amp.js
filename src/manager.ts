@@ -1,4 +1,4 @@
-import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, toAccelerationState, toTurnState, toOrientation, toAction, Profile, ActionsText } from './models'
+import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, Profile, ActionsText } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 import * as _ from 'lodash'
@@ -478,13 +478,13 @@ export default class Amp {
     let motion = Object.assign({}, this.motionState)
 
     temp = data.getUint8(0)
-    motion.motion = toAccelerationState(temp)
+    motion.motion = temp as AccelerationState
 
     temp = data.getUint8(1)
-    motion.turn = toTurnState(temp)
+    motion.turn = temp as TurnState
 
     temp = data.getUint8(2)
-    motion.orientation = toOrientation(temp)
+    motion.orientation = temp as Orientation
 
     return motion
   }
