@@ -86,7 +86,7 @@ export default class Amp {
   motion = new Subject()
   actions = new Subject()
   profileTransceive = new Subject()
-  profile = new Subject()
+  profile = new Subject<Profile>()
   otaDownload = new Subject()
   otaDownloadUpdates = new Subject<OTAUpdateState>()
 
