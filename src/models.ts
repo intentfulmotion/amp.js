@@ -123,6 +123,14 @@ export type ActionsText = [
   'reactive'
 ]
 
+export enum LightType {
+  neoPixel = 0,
+  ws2813 = 1,
+  sk6812 = 2,
+  sk6812_rgbw = 3,
+  dotStar = 4
+}
+
 export type LightEffect = {
   region: string
   effect: string
@@ -146,7 +154,7 @@ export type MotionProfile = {
 export type ChannelProfile = {
   channel: number
   leds: number
-  type: number
+  type: LightType
 }
 
 export type RegionProfile = {

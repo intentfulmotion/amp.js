@@ -381,8 +381,8 @@ export default class Amp {
   }
 
   toPackedUint32(num: number) {
-    let asUint32 = Uint32Array.of(num)
-    let view = new DataView(asUint32.buffer)
+    const asUint32 = Uint32Array.of(num)
+    const view = new DataView(asUint32.buffer)
     return new Uint8Array(view.buffer)
   }
 
@@ -392,7 +392,7 @@ export default class Amp {
   }
 
   async setEffect(action: [keyof ActionsText], region: string, effect: string, save = false) {
-    let key = save ? "saveEffect" : "effect"
+    const key = save ? "saveEffect" : "effect"
     await this.profileSend(key, `${action},${region},${effect}`)
   }
 
@@ -410,7 +410,7 @@ export default class Amp {
   onBatteryStateChanged(event: any) {
     if (event.data) {
       const data = event.data.value
-      let newBattery = this.parseBattery(data)
+      const newBattery = this.parseBattery(data)
 
       // only push a new battery state if things have changed
       if (!_.isEqual(this.batteryState, newBattery)) {
@@ -421,14 +421,14 @@ export default class Amp {
   }
 
   parseBattery(data: DataView) {
-    let batteryState = Object.assign({}, this.batteryState)
+    const batteryState = Object.assign({}, this.batteryState)
     batteryState.level = data.getUint8(0)
 
-    let state = data.getUint8(1)
-    let binary = (state >>> 0).toString(2)
+    const state = data.getUint8(1)
+    const binary = (state >>> 0).toString(2)
     
     // state of charge
-    let binaryStateString = binary.substring(0, 2)
+    const binaryStateString = binary.substring(0, 2)
     if (binaryStateString === '10')
       batteryState.state = BatteryState.normal
     else if (binaryStateString === '11')
@@ -437,14 +437,14 @@ export default class Amp {
       batteryState.state = BatteryState.unknown
 
     // discharging / charging
-    let charging = binary.substring(2, 4)
+    const charging = binary.substring(2, 4)
     if (charging === '11')
       batteryState.charging = true
     else if (charging === '10')
       batteryState.charging = false
 
     // battery present
-    let present = binary.substring(6, 8)
+    const present = binary.substring(6, 8)
     if (present === '11')
       batteryState.present = true
     else if (present === '10')
@@ -456,7 +456,7 @@ export default class Amp {
   parseControl(data: DataView) {
     let temp = null
 
-    let control = Object.assign({}, this.controlState)
+    const control = Object.assign({}, this.controlState)
     
     if (data.byteLength >= 1) {
       temp = data.getUint8(0)
@@ -478,7 +478,7 @@ export default class Amp {
 
   onControlChanged(event: any) {
     const data = event.target?.value
-    let newControl = this.parseControl(data)
+    const newControl = this.parseControl(data)
 
     // only push a new control state if things have changed
     if (!_.isEqual(this.controlState, newControl)) {
@@ -489,7 +489,7 @@ export default class Amp {
 
   parseMotion(data: DataView) {
     let temp = null
-    let motion = Object.assign({}, this.motionState)
+    const motion = Object.assign({}, this.motionState)
 
     temp = data.getUint8(0)
     motion.motion = temp as AccelerationState
@@ -505,7 +505,7 @@ export default class Amp {
 
   onMotionChanged(event: any) {
     const data = event.target.value
-    let newMotion = this.parseMotion(data)
+    const newMotion = this.parseMotion(data)
 
     // only push a new motion state if things have changed
     if (!_.isEqual(this.motionState, newMotion)) {
@@ -516,7 +516,7 @@ export default class Amp {
 
   parseActions(data: DataView) {
     let temp = null
-    let actions = Object.assign({}, this.actionState)
+    const actions = Object.assign({}, this.actionState)
 
     temp = data.getUint8(0)
     const motionAction = temp as Action
@@ -539,7 +539,7 @@ export default class Amp {
 
   onActionsChanged(event: any) {
     const data = event.target?.value
-    let newActions = this.parseActions(data)
+    const newActions = this.parseActions(data)
 
     // only push a new action state if things have changed
     if (!_.isEqual(this.actionState, newActions)) {
@@ -564,7 +564,7 @@ export default class Amp {
 
   onProfileTransceiveChanged(event: any) {
     const data = event.target.value
-    let status = data.getUint8(0)
+    const status = data.getUint8(0)
 
     switch (status) {
       case ProfileTransceiverStatus.transmit_start:
@@ -586,11 +586,11 @@ export default class Amp {
 
   parseReceivedData(buffer: Uint8Array) {
     // find colon
-    let colonIndex = buffer.indexOf(58)
+    const colonIndex = buffer.indexOf(58)
     if (colonIndex != -1) {
-      let keyBuffer = buffer.slice(0, colonIndex)
-      let valueBuffer = buffer.slice(colonIndex + 1, buffer.buffer.byteLength)
-      let key = decoder.decode(keyBuffer)
+      const keyBuffer = buffer.slice(0, colonIndex)
+      const valueBuffer = buffer.slice(colonIndex + 1, buffer.buffer.byteLength)
+      const key = decoder.decode(keyBuffer)
 
       if (key === 'raw') {
         this._profile = decode(valueBuffer) as Profile
