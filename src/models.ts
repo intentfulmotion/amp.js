@@ -134,6 +134,7 @@ export enum LightType {
 export type LightEffect = {
   region: string
   effect: string
+  reverse?: boolean
 }
 
 export type ActionProfile = Record<keyof ActionsText, LightEffect[]>
