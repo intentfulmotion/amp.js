@@ -128,7 +128,7 @@ export type LightEffect = {
   effect: string
 }
 
-export type ActionProfile = Record<keyof ActionsText, LightEffect>
+export type ActionProfile = Record<keyof ActionsText, LightEffect[]>
 
 export type MotionProfile = {
   autoOrientation?: boolean
