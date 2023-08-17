@@ -127,6 +127,7 @@ export default class Amp {
   _profileTransceiveInProgress = false
   _receiveSize = 0
   _receivedSize = 0
+  _otaDownloadStatus: OtaDownloadStatus | null = null
 
   _profile: Profile | null = null
 
@@ -318,11 +319,21 @@ export default class Amp {
     }
   }
 
+  sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   async sendOTAUpdate(data: ArrayBuffer) {
     await this.startOTAUpdate()
+    await this.sleep(1000)
     const parts = Math.ceil(data.byteLength / this.PacketSize)
 
+    if (this._otaDownloadStatus === OtaDownloadStatus.download_start_error)
+      return
+
     for (let i = 0; i < parts; i++) {
+      if (this._otaDownloadStatus === OtaDownloadStatus.download_write_error || this._otaDownloadStatus === OtaDownloadStatus.download_end_error)
+        return
       let part = data.slice(this.PacketSize * i, this.PacketSize * (i + 1))
       await this.otaTransmit?.writeValue(part)
       this.otaDownloadUpdates.next({ progress: i / parts })
@@ -591,8 +602,8 @@ export default class Amp {
 
   onOTAStatusChanged(event: any) {
     const data = event.target.value
-    let status = data.getUint8(0)
+    this._otaDownloadStatus = data.getUint8(0)
 
-    this.otaDownloadUpdates.next({ status: status })
+    this.otaDownloadUpdates.next({ status: this._otaDownloadStatus!! })
   }
 }
