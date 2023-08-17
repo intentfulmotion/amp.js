@@ -152,11 +152,11 @@ export type LightEffectDataParams = {
 }
 
 export enum LightEffectDataParamType {
-  string,
-  number,
-  uint8,
-  float,
-  color
+  string = 'string',
+  number = 'number',
+  uint8 = 'uint8',
+  float = 'float',
+  color = 'color'
 }
 
 export type ActionProfile = Record<keyof ActionsText, LightEffect[]>
