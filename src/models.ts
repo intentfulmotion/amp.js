@@ -151,8 +151,7 @@ export type LightEffectDataParams = {
   required: boolean,
 }
 
-type lightEffectDataParamType = ['string' | 'number' | 'float' | 'uint8' | 'color']
-export type LightEffectDataParamType = lightEffectDataParamType[number]
+export type LightEffectDataParamType = 'string' | 'number' | 'float' | 'uint8' | 'color'
 
 export type ActionProfile = Record<keyof ActionsText, LightEffect[]>
 

@@ -1,3 +1,5 @@
+import { LightEffectDataParamType } from "./models";
+
 const effects = [
   {
     name: "Transparent",
@@ -430,4 +432,14 @@ const effects = [
   }
 ]
 
-export default effects;
+export default effects.map(effect => {
+  return {
+    ...effect,
+    params: effect.params.map(param => {
+      return {
+        ...param,
+        type: param.type as LightEffectDataParamType
+      }
+    })
+  }
+});
