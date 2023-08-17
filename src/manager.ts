@@ -603,6 +603,8 @@ export default class Amp {
     const data = event.target.value
     this._otaDownloadStatus = data.getUint8(0)
 
+    console.log('download status', this._otaDownloadStatus)
+
     switch (this._otaDownloadStatus) {
       case OtaDownloadStatus.ready:
         if (this._updateFile)

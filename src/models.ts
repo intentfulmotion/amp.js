@@ -67,6 +67,24 @@ export enum TurnState {
   hazard = 3
 }
 
+export enum AccelerationAxis {
+  x_positive = 0,
+  x_negative = 1,
+  y_positive = 2,
+  y_negative = 3,
+  z_positive = 4,
+  z_negative = 5
+}
+
+export enum AttitudeAxis {
+  roll = 0,
+  roll_negative = 1,
+  pitch = 2,
+  pitch_negative = 3,
+  yaw = 4,
+  yaw_negative = 5
+}
+
 export enum Orientation {
   unknown = 0,
   top_up = 1,
@@ -116,6 +134,8 @@ export type MotionProfile = {
   autoOrientation?: boolean
   autoMotion?: boolean
   autoTurn?: boolean
+  motionAxis?: AccelerationAxis
+  turnAxis?: AttitudeAxis
   brakeThreshold?: number
   accelerationThreshold?: number
   orientationAxis?: Orientation
