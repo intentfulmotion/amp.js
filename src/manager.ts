@@ -298,16 +298,16 @@ export default class Amp {
 
   async startOTAUpdate() {
     const data = new Uint8Array(1)
-    data[0] = OtaDownloadStatus.download_start
+    data[0] = OtaDownloadStatus.start
     await this.otaControl?.writeValue(data)
-    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.download_start, progress: 0 })
+    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.start, progress: 0 })
   }
 
   async endOTAUpdate() {
     const data = new Uint8Array(1)
-    data[0] = OtaDownloadStatus.download_end
+    data[0] = OtaDownloadStatus.end
     await this.otaControl?.writeValue(data)
-    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.download_end, progress: 100 })
+    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.end, progress: 100 })
   }
 
   async downloadOTAUpdate(url: string) {
@@ -604,7 +604,7 @@ export default class Amp {
     this._otaDownloadStatus = data.getUint8(0)
 
     switch (this._otaDownloadStatus) {
-      case OtaDownloadStatus.download_start:
+      case OtaDownloadStatus.ready:
         if (this._updateFile)
           this.sendOTAUpdate(this._updateFile)
         break

@@ -46,12 +46,13 @@ export enum ProfileTransceiverStatus {
 }
 
 export enum OtaDownloadStatus {
-  download_start = 0,
-  download_end = 1,
-  download_write = 2,
-  download_start_error = 3,
-  download_end_error = 4,
-  download_write_error = 5
+  start = 0,
+  end = 1,
+  ready = 2,
+  write = 3,  
+  start_error = 4,
+  end_error = 5,
+  write_error = 6
 }
 
 export enum AccelerationState {
