@@ -130,6 +130,7 @@ export default class Amp {
   _otaDownloadStatus: OtaDownloadStatus | null = null
 
   _profile: Profile | null = null
+  _updateFile: ArrayBuffer | null = null
 
   constructor(MTU = 512) {
     this.MTU = MTU
@@ -323,17 +324,15 @@ export default class Amp {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async sendOTAUpdate(data: ArrayBuffer) {
+  async updateFirmware(data: ArrayBuffer) {
+    this._updateFile = data
     await this.startOTAUpdate()
-    await this.sleep(1000)
-    const parts = Math.ceil(data.byteLength / this.PacketSize)
+  }
 
-    if (this._otaDownloadStatus === OtaDownloadStatus.download_start_error)
-      return
+  async sendOTAUpdate(data: ArrayBuffer) {
+    const parts = Math.ceil(data.byteLength / this.PacketSize) 
 
     for (let i = 0; i < parts; i++) {
-      if (this._otaDownloadStatus === OtaDownloadStatus.download_write_error || this._otaDownloadStatus === OtaDownloadStatus.download_end_error)
-        return
       let part = data.slice(this.PacketSize * i, this.PacketSize * (i + 1))
       await this.otaTransmit?.writeValue(part)
       this.otaDownloadUpdates.next({ progress: i / parts })
@@ -603,6 +602,13 @@ export default class Amp {
   onOTAStatusChanged(event: any) {
     const data = event.target.value
     this._otaDownloadStatus = data.getUint8(0)
+
+    switch (this._otaDownloadStatus) {
+      case OtaDownloadStatus.download_start:
+        if (this._updateFile)
+          this.sendOTAUpdate(this._updateFile)
+        break
+    }
 
     this.otaDownloadUpdates.next({ status: this._otaDownloadStatus!! })
   }
