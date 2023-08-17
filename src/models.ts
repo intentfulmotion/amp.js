@@ -137,6 +137,26 @@ export type LightEffect = {
   reverse?: boolean
 }
 
+export type LightEffectData = {
+  name: string,
+  type: number,
+  description: string,
+  params: LightEffectDataParams[]
+}
+
+export type LightEffectDataParams = {
+  name: string,
+  description: string,
+  type: LightEffectDataParamType,
+  required: boolean,
+}
+
+export enum LightEffectDataParamType {
+  string,
+  number,
+  color
+}
+
 export type ActionProfile = Record<keyof ActionsText, LightEffect[]>
 
 export type MotionProfile = {

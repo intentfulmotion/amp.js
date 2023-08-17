@@ -405,13 +405,13 @@ const effects = [
       {
         name: "min",
         description: "Minimum attitude value",
-        type: "float",
+        type: "number",
         required: true
       },
       {
         name: "max",
         description: "Maximum attitude value",
-        type: "float",
+        type: "number",
         required: true
       },
       {
