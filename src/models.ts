@@ -140,13 +140,13 @@ export type LightEffect = {
 export type LightEffectData = {
   name: string,
   type: number,
-  description: string,
+  description?: string,
   params: LightEffectDataParams[]
 }
 
 export type LightEffectDataParams = {
   name: string,
-  description: string,
+  description?: string,
   type: LightEffectDataParamType,
   required: boolean,
 }
