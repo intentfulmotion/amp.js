@@ -7,7 +7,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ],
@@ -20,7 +20,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -38,7 +38,7 @@ const effects = [
       },
       {
         name: "layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -69,7 +69,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -100,7 +100,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -131,7 +131,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -156,7 +156,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -187,7 +187,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -218,7 +218,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -237,7 +237,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -256,7 +256,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -293,7 +293,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -318,7 +318,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -349,7 +349,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -380,7 +380,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]
@@ -405,13 +405,13 @@ const effects = [
       {
         name: "min",
         description: "Minimum attitude value",
-        type: "number",
+        type: "float",
         required: true
       },
       {
         name: "max",
         description: "Maximum attitude value",
-        type: "number",
+        type: "float",
         required: true
       },
       {
@@ -423,7 +423,7 @@ const effects = [
       {
         name: "layer",
         description: "Layer",
-        type: "number",
+        type: "uint8",
         required: false
       }
     ]

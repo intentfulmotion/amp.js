@@ -154,6 +154,8 @@ export type LightEffectDataParams = {
 export enum LightEffectDataParamType {
   string,
   number,
+  uint8,
+  float,
   color
 }
 
