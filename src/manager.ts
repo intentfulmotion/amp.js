@@ -78,7 +78,7 @@ export default class Amp {
 
   MTU: number = 512
   PacketSize: number = this.MTU - 3
-  ProfilePacketSize: number = 20
+  ProfilePacketSize: number = 185
 
   connection = new Subject<ConnectionStatus>()
   battery = new Subject<AmpBatteryState>()
@@ -308,7 +308,7 @@ export default class Amp {
     const data = new Uint8Array(1)
     data[0] = OtaDownloadStatus.end
     await this.otaControl?.writeValue(data)
-    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.end, progress: 100 })
+    this.otaDownloadUpdates.next({ status: OtaDownloadStatus.end, progress: 1.0 })
   }
 
   async downloadOTAUpdate(url: string) {
@@ -377,7 +377,7 @@ export default class Amp {
 
     // notify that we're ending a config transmission
     this._profileTransceiveInProgress = false
-    this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: 100, done: true })
+    this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: 1.0, done: true })
     this.profileTransceive.next(this.profileTransceiveState)
   }
 
@@ -558,6 +558,7 @@ export default class Amp {
     this.profileTransceive.next(this.profileTransceiveState)
 
     if (this.profileTransceiveState.done) {
+      console.log('received profile complete')
       this.parseReceivedData(this.profileReceiveBuffer)
       this._profileTransceiveInProgress = false
     }
