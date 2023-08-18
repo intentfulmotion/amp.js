@@ -588,15 +588,14 @@ export default class Amp {
   parseReceivedData(buffer: Uint8Array) {
     // find colon
     const colonIndex = buffer.indexOf(58)
-    console.log('colon index', colonIndex)
     if (colonIndex != -1) {
       const keyBuffer = buffer.slice(0, colonIndex)
       const valueBuffer = buffer.slice(colonIndex + 1, buffer.buffer.byteLength)
       const key = decoder.decode(keyBuffer)
-      console.log('key', key)
 
       if (key === 'raw') {
         this._profile = decode(valueBuffer) as Profile
+        console.log(decode(valueBuffer), this._profile)
         this.profile.next(this._profile)
       }
     }
