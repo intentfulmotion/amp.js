@@ -558,7 +558,6 @@ export default class Amp {
     this.profileTransceive.next(this.profileTransceiveState)
 
     if (this.profileTransceiveState.done) {
-      console.log('received profile complete')
       this.parseReceivedData(this.profileReceiveBuffer)
       this._profileTransceiveInProgress = false
     }
@@ -589,10 +588,12 @@ export default class Amp {
   parseReceivedData(buffer: Uint8Array) {
     // find colon
     const colonIndex = buffer.indexOf(58)
+    console.log('colon index', colonIndex)
     if (colonIndex != -1) {
       const keyBuffer = buffer.slice(0, colonIndex)
       const valueBuffer = buffer.slice(colonIndex + 1, buffer.buffer.byteLength)
       const key = decoder.decode(keyBuffer)
+      console.log('key', key)
 
       if (key === 'raw') {
         this._profile = decode(valueBuffer) as Profile
