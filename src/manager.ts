@@ -595,7 +595,6 @@ export default class Amp {
 
       if (key === 'raw') {
         this._profile = decode(valueBuffer) as Profile
-        console.log(decode(valueBuffer), this._profile)
         this.profile.next(this._profile)
       }
     }
