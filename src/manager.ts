@@ -273,7 +273,7 @@ export default class Amp {
     await this.controlCharacteristic?.writeValue(data)
   }
 
-  async updateLights(motion = Action.ignore, headlight = Action.ignore, indicators = Action.ignore, orientation = Action.ignore) {
+  async updateLights({motion = Action.ignore, headlight = Action.ignore, indicators = Action.ignore, orientation = Action.ignore}) {
     console.log(`update lights: ${motion}, ${headlight}, ${indicators}, ${orientation}`)
     let data = new Uint8Array(3)
     data[0] = motion
@@ -284,7 +284,7 @@ export default class Amp {
     await this.lightsCharacteristic?.writeValue(data)
   }
 
-  async calibrate(calibrateAccelerometer: boolean, calibrateGyroscope: boolean, calibrateMagnetometer: boolean) {
+  async calibrate({calibrateAccelerometer = false, calibrateGyroscope = false, calibrateMagnetometer = false}) {
     let data = new Uint8Array(3)
     data[0] = calibrateAccelerometer ? 0x01 : 0x00
     data[1] = calibrateGyroscope ? 0x01 : 0x00
