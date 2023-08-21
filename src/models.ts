@@ -120,6 +120,13 @@ export type ActionsText = [
   'turn-left',
   'turn-right',
   'turn-hazard',
+  'orientation-unknown',
+  'orientation-top',
+  'orientation-bottom',
+  'orientation-left',
+  'orientation-right',
+  'orientation-front',
+  'orientation-back',
   'reactive'
 ]
 

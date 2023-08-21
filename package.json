@@ -1,6 +1,6 @@
 {
   "name": "amp-smart-light",
-  "version": "0.6.31",
+  "version": "0.6.32",
   "description": "Library to interact with an Amp smart lighting controller",
   "main": "src/index.js",
   "scripts": {},
@@ -23,6 +23,7 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.3.0",
     "lodash": "^4.17.20",
+    "p-queue": "^7.3.4",
     "rxjs": "^6.6.3"
   },
   "devDependencies": {

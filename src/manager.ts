@@ -2,9 +2,12 @@ import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTr
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 import * as _ from 'lodash'
+import PQueue from "p-queue"
 
 const decoder = new TextDecoder('utf-8')
 const encoder = new TextEncoder()
+
+export const bleQueue = new PQueue({ concurrency: 1 })
 
 export interface ConnectionStatus {
   state: ConnectionState
@@ -173,7 +176,7 @@ export default class Amp {
         // battery level notifications
         this.batteryState = this.parseBattery(await this.batteryCharacteristic.readValue())
         this.batteryCharacteristic.addEventListener('characteristicvaluechanged', this.onBatteryStateChanged)
-        this.batteryCharacteristic.startNotifications()
+        await this.batteryCharacteristic.startNotifications()
       } catch (err) {
         console.warn(err)
       }
@@ -193,13 +196,13 @@ export default class Amp {
 
       // vehicle service notifications
       this.controlCharacteristic.addEventListener('characteristicvaluechanged', event => this.onControlChanged(event))
-      this.controlCharacteristic.startNotifications()
+      await this.controlCharacteristic.startNotifications()
 
       this.stateCharacteristic.addEventListener('characteristicvaluechanged', event => this.onMotionChanged(event))
-      this.stateCharacteristic.startNotifications()
+      await this.stateCharacteristic.startNotifications()
 
       this.lightsCharacteristic.addEventListener('characteristicvaluechanged', event => this.onActionsChanged(event))
-      this.lightsCharacteristic.startNotifications()
+      await this.lightsCharacteristic.startNotifications()
 
       // profile service
       let profileService = await this.server.getPrimaryService(Bluetooth.profileService)
@@ -209,10 +212,10 @@ export default class Amp {
 
       // profile service notifications
       this.profileReceive.addEventListener('characteristicvaluechanged', event => this.onProfileReceived(event))
-      this.profileReceive.startNotifications()
+      await this.profileReceive.startNotifications()
 
       this.profileStatus.addEventListener('characteristicvaluechanged', event => this.onProfileTransceiveChanged(event))
-      this.profileStatus.startNotifications()
+      await this.profileStatus.startNotifications()
 
       // ota service
       let otaService = await this.server.getPrimaryService(Bluetooth.otaService)
@@ -222,7 +225,7 @@ export default class Amp {
 
       // ota service notifications
       this.otaStatus.addEventListener('characteristicvaluechanged', event => this.onOTAStatusChanged(event))
-      this.otaStatus.startNotifications()
+      await this.otaStatus.startNotifications()
 
       this._profileTransceiveInProgress = false
       this.connection.next({ state: ConnectionState.ready, data: null })
@@ -270,7 +273,7 @@ export default class Amp {
     else
       data[2] = autoOrientation ? 0x01 : 0x02
 
-    await this.controlCharacteristic?.writeValue(data)
+    await bleQueue.add(async () => this.controlCharacteristic?.writeValue(data))
   }
 
   async updateLights({motion = Action.ignore, headlight = Action.ignore, indicators = Action.ignore, orientation = Action.ignore}) {
@@ -281,7 +284,7 @@ export default class Amp {
     data[2] = indicators
     data[3] = orientation
 
-    await this.lightsCharacteristic?.writeValue(data)
+    await bleQueue.add(async () => await this.lightsCharacteristic?.writeValue(data))
   }
 
   async calibrate({calibrateAccelerometer = false, calibrateGyroscope = false, calibrateMagnetometer = false}) {
@@ -290,24 +293,24 @@ export default class Amp {
     data[1] = calibrateGyroscope ? 0x01 : 0x00
     data[2] = calibrateMagnetometer ? 0x01 : 0x00
 
-    await this.calibrationCharacteristic?.writeValue(data)
+    await bleQueue.add(async () => await this.calibrationCharacteristic?.writeValue(data))
   }
 
   async reset() {
-    await this.resetCharacteristic?.writeValue(Uint8Array.of(1))
+    await bleQueue.add(async () => await this.resetCharacteristic?.writeValue(Uint8Array.of(1)))
   }
 
   async startOTAUpdate() {
     const data = new Uint8Array(1)
     data[0] = OtaDownloadStatus.start
-    await this.otaControl?.writeValue(data)
+    await bleQueue.add(async () => await this.otaControl?.writeValue(data))
     this.otaDownloadUpdates.next({ status: OtaDownloadStatus.start, progress: 0 })
   }
 
   async endOTAUpdate() {
     const data = new Uint8Array(1)
     data[0] = OtaDownloadStatus.end
-    await this.otaControl?.writeValue(data)
+    await bleQueue.add(async () => await this.otaControl?.writeValue(data))
     this.otaDownloadUpdates.next({ status: OtaDownloadStatus.end, progress: 1.0 })
   }
 
@@ -335,7 +338,7 @@ export default class Amp {
 
     for (let i = 0; i < parts; i++) {
       let part = data.slice(this.PacketSize * i, this.PacketSize * (i + 1))
-      await this.otaTransmit?.writeValue(part)
+      await bleQueue.add(async () => await this.otaTransmit?.writeValue(part))
       this.otaDownloadUpdates.next({ progress: i / parts })
     }
 
@@ -364,13 +367,13 @@ export default class Amp {
     header.set(this.toPackedUint32(encoded.buffer.byteLength), 1)
 
     // tell the profile service we're starting to transmit with x bytes
-    await this.profileStatus?.writeValue(header)
+    await bleQueue.add(async () => this.profileStatus?.writeValue(header))
 
     // send the data
     let parts = Math.ceil(encoded.buffer.byteLength / this.ProfilePacketSize)
     for (let i = 0; i < parts; i++) {
       let part = encoded.slice(this.ProfilePacketSize * i, this.ProfilePacketSize * (i + 1))
-      await this.profileTransmit?.writeValue(part)
+      await bleQueue.add(async () => this.profileTransmit?.writeValue(part))
       this.profileTransceiveState = Object.assign(this.profileTransceiveState, { progress: i / parts, done: false })
       this.profileTransceive.next(this.profileTransceiveState)
     }
