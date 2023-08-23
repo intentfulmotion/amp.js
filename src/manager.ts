@@ -1,4 +1,4 @@
-import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, Profile, ActionsText } from './models'
+import { Bluetooth, Action, AccelerationState, TurnState, Orientation, ProfileTransceiverStatus, OtaDownloadStatus, BatteryState, ConnectionState, Profile, ActionsText, LightEffect } from './models'
 import { encode, decode } from '@msgpack/msgpack'
 import { Subject } from 'rxjs'
 import * as _ from 'lodash'
@@ -395,9 +395,10 @@ export default class Amp {
     this.name = name
   }
 
-  async setEffect(action: [keyof ActionsText], region: string, effect: string, save = false) {
+  async setEffect(action: [keyof ActionsText], effect: LightEffect, save = false) {
     const key = save ? "saveEffect" : "effect"
-    await this.profileSend(key, `${action},${region},${effect}`)
+    if (effect.reverse === undefined) effect.reverse = false
+    await this.profileSend(key, `${action},${effect.region},${effect.effect},${effect.reverse}`)
   }
 
   async getProfile() {
