@@ -395,10 +395,11 @@ export default class Amp {
     this.name = name
   }
 
-  async setEffect(action: [keyof ActionsText], effect: LightEffect, save = false) {
+  async setEffect(action: keyof ActionsText, effect: LightEffect, save = false) {
     const key = save ? "saveEffect" : "effect"
     if (effect.reverse === undefined) effect.reverse = false
-    await this.profileSend(key, `${action},${effect.region},${effect.effect},${effect.reverse}`)
+    console.log('set effect', `${String(action)},${effect.region},${effect.effect},${effect.reverse}`)
+    await this.profileSend(key, `${String(action)},${effect.region},${effect.effect},${effect.reverse}`)
   }
 
   async getProfile() {
