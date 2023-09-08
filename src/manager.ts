@@ -75,6 +75,7 @@ export default class Amp {
   otaTransmit: BluetoothRemoteGATTCharacteristic | null = null
   otaStatus: BluetoothRemoteGATTCharacteristic | null = null
 
+  manufacturer: string | null = null
   serialNumber: string | null = null
   firmwareRevision: string | null = null
   hardwareRevision: string | null = null
@@ -241,18 +242,29 @@ export default class Amp {
   }
 
   async getDeviceInfo() {
-    let deviceInfo = await this.server?.getPrimaryService('device_information')
+    const deviceInfo = await this.server?.getPrimaryService('device_information')
 
     // disabled because of web bluetooth privacy restrictions
-    let tempCharacteristic = await deviceInfo?.getCharacteristic('model_number_string')
-    this.serialNumber = decoder.decode(await tempCharacteristic?.readValue())
-    console.log('serial number', this.serialNumber)
+    const characteristics = await deviceInfo?.getCharacteristics()
 
-    tempCharacteristic = await deviceInfo?.getCharacteristic('firmware_revision_string')
-    this.firmwareRevision = decoder.decode(await tempCharacteristic?.readValue())
-
-    tempCharacteristic = await deviceInfo?.getCharacteristic('hardware_revision_string')
-    this.hardwareRevision = decoder.decode(await tempCharacteristic?.readValue())
+    if (characteristics) {
+      for (const characteristic of characteristics) {
+        switch (characteristic.uuid) {
+          case BluetoothUUID.getCharacteristic('manufacturer_name_string'):
+            this.manufacturer = decoder.decode(await characteristic.readValue())
+            break
+          case BluetoothUUID.getCharacteristic('model_number_string'):
+            this.serialNumber = decoder.decode(await characteristic.readValue())
+            break
+          case BluetoothUUID.getCharacteristic('firmware_revision_string'):
+            this.firmwareRevision = decoder.decode(await characteristic.readValue())
+            break
+          case BluetoothUUID.getCharacteristic('hardware_revision_string'):
+            this.hardwareRevision = decoder.decode(await characteristic.readValue())
+            break
+        }
+      }
+    }
 
     this.deviceInfo.next({ serialNumber: this.serialNumber, firmwareRevision: this.firmwareRevision, hardwareRevision: this.hardwareRevision })
   }
