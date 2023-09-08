@@ -244,10 +244,10 @@ export default class Amp {
     let deviceInfo = await this.server?.getPrimaryService('device_information')
 
     // disabled because of web bluetooth privacy restrictions
-    // let tempCharacteristic = await deviceInfo.getCharacteristic('serial_number_string')
-    // this.serialNumber = decoder.decode(await tempCharacteristic.readValue())
+    let tempCharacteristic = await deviceInfo?.getCharacteristic('model_number_string')
+    this.serialNumber = decoder.decode(await tempCharacteristic?.readValue())
 
-    let tempCharacteristic = await deviceInfo?.getCharacteristic('firmware_revision_string')
+    tempCharacteristic = await deviceInfo?.getCharacteristic('firmware_revision_string')
     this.firmwareRevision = decoder.decode(await tempCharacteristic?.readValue())
 
     tempCharacteristic = await deviceInfo?.getCharacteristic('hardware_revision_string')
