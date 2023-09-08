@@ -248,18 +248,23 @@ export default class Amp {
     const characteristics = await deviceInfo?.getCharacteristics()
 
     if (characteristics) {
+      console.log('this is a test')
       for (const characteristic of characteristics) {
+        console.log(characteristic.uuid)
         switch (characteristic.uuid) {
           case BluetoothUUID.getCharacteristic('manufacturer_name_string'):
             this.manufacturer = decoder.decode(await characteristic.readValue())
             break
           case BluetoothUUID.getCharacteristic('model_number_string'):
+            console.log('model number')
             this.serialNumber = decoder.decode(await characteristic.readValue())
             break
           case BluetoothUUID.getCharacteristic('firmware_revision_string'):
+            console.log('firmware revision')
             this.firmwareRevision = decoder.decode(await characteristic.readValue())
             break
           case BluetoothUUID.getCharacteristic('hardware_revision_string'):
+            console.log('hardware revision')
             this.hardwareRevision = decoder.decode(await characteristic.readValue())
             break
         }
