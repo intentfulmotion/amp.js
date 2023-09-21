@@ -37,7 +37,8 @@ export enum Action {
   orientation_left = 15,
   orientation_right = 16,
   orientation_front = 17,
-  orientation_back = 18
+  orientation_back = 18,
+  motion_stopped = 19
 }
 
 export enum ProfileTransceiverStatus {
@@ -127,7 +128,7 @@ export type ActionsText = [
   'orientation-right',
   'orientation-front',
   'orientation-back',
-  'reactive'
+  'motion-stopped',
 ]
 
 export enum LightType {
